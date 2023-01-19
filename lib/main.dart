@@ -34,8 +34,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  static const maxSeconds = 60;
+  static int maxSeconds = 60;
   int seconds = maxSeconds;
+  int inputSeconds = 0;
+  int repeatCount = 0;
+  int pauseDuration = 0;
   Timer? timer;
 
   void resetTimer() => setState(() => seconds = maxSeconds);
@@ -45,13 +48,25 @@ class _MyHomePageState extends State<MyHomePage> {
       resetTimer();
     }
 
-    timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (seconds > 0) {
-        setState(() => seconds--);
-      } else {
-        stopTimer(reset: false);
-      }
-    });
+    timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (seconds > 0) {
+          setState(() => seconds--);
+        } else {
+          if (repeatCount > 0) {
+            repeatCount--;
+            Future.delayed(
+              Duration(seconds: pauseDuration),
+              () =>
+                  startTimerWithInput(inputSeconds, repeatCount, pauseDuration),
+            );
+          } else {
+            stopTimer(reset: false);
+          }
+        }
+      },
+    );
   }
 
   void stopTimer({bool reset = true}) {
@@ -59,6 +74,34 @@ class _MyHomePageState extends State<MyHomePage> {
       resetTimer();
     }
     setState(() => timer?.cancel());
+  }
+
+  void startTimerWithInput(
+      int inputSeconds, int repeatCount, int pauseDuration) {
+    setState(
+      () {
+        seconds = inputSeconds;
+        maxSeconds = inputSeconds;
+      },
+    );
+    timer?.cancel();
+    timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (seconds > 0) {
+          setState(() => seconds--);
+        } else {
+          stopTimer(reset: false);
+          if (repeatCount > 1) {
+            repeatCount--;
+            Future.delayed(
+                Duration(seconds: pauseDuration),
+                () => startTimerWithInput(
+                    inputSeconds, repeatCount, pauseDuration));
+          }
+        }
+      },
+    );
   }
 
   @override
@@ -89,11 +132,85 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget _buildSetTimeButton() {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.black,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 32,
+          vertical: 16,
+        ),
+      ),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Set Timer"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                        labelText: "Enter time in seconds"),
+                    onChanged: (text) {
+                      inputSeconds = int.parse(text);
+                    },
+                  ),
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        const InputDecoration(labelText: "Enter repeat count"),
+                    onChanged: (text) {
+                      repeatCount = int.parse(text);
+                    },
+                  ),
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                        labelText: "Enter pause duration in seconds"),
+                    onChanged: (text) {
+                      pauseDuration = int.parse(text);
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                ButtonWidget(
+                  text: "OK",
+                  onClicked: () {
+                    Navigator.of(context).pop();
+                    startTimerWithInput(
+                        inputSeconds, repeatCount, pauseDuration);
+                  },
+                ),
+                ButtonWidget(
+                  text: "Cancel",
+                  onClicked: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: const Text(
+        "Set Timer",
+        style: TextStyle(
+          fontSize: 20,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
   Widget buildButtons() {
     final isRunning = timer == null ? false : timer!.isActive;
     final isCompleted = seconds == maxSeconds || seconds == 0;
 
-    return isRunning || !isCompleted
+    return isRunning || !isCompleted && repeatCount!=0
         ? Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -114,13 +231,20 @@ class _MyHomePageState extends State<MyHomePage> {
               )
             ],
           )
-        : ButtonWidget(
-            text: 'Start Timer!',
-            color: Colors.black,
-            backgroundColor: Colors.white,
-            onClicked: () {
-              startTimer();
-            },
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ButtonWidget(
+                text: 'Start Timer!',
+                color: Colors.black,
+                backgroundColor: Colors.white,
+                onClicked: () {
+                  startTimer();
+                },
+              ),
+              const SizedBox(width: 12),
+              _buildSetTimeButton(),
+            ],
           );
   }
 
