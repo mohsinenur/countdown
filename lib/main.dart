@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:timer/widget/button_widget.dart';
+import 'widget/button_icon_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -88,34 +89,46 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void startTimerWithInput(
-      int inputSeconds, int repeatCount, int pauseDuration) {
-    setState(
-      () {
-        seconds = inputSeconds;
-        maxSeconds = inputSeconds;
-        inputSecondsController.text = inputSeconds.toString();
-        repeatCountController.text = repeatCount.toString();
-        pauseDurationController.text = pauseDuration.toString();
-      },
-    );
-    timer?.cancel();
-    timer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (seconds > 0) {
-          setState(() => seconds--);
-        } else {
-          stopTimer(reset: false);
-          if (repeatCount > 1) {
-            repeatCount--;
-            Future.delayed(
-                Duration(seconds: pauseDuration),
-                () => startTimerWithInput(
-                    inputSeconds, repeatCount, pauseDuration));
+    int inputSeconds,
+    int repeatCount,
+    int pauseDuration,
+  ) {
+    if (inputSeconds <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Timer should be greater than 0"),
+        ),
+      );
+    } else {
+      setState(
+        () {
+          seconds = inputSeconds;
+          maxSeconds = inputSeconds;
+          inputSecondsController.text = inputSeconds.toString();
+          repeatCountController.text = repeatCount.toString();
+          pauseDurationController.text = pauseDuration.toString();
+        },
+      );
+
+      timer?.cancel();
+      timer = Timer.periodic(
+        const Duration(seconds: 1),
+        (_) {
+          if (seconds > 0) {
+            setState(() => seconds--);
+          } else {
+            stopTimer(reset: false);
+            if (repeatCount > 1) {
+              repeatCount--;
+              Future.delayed(
+                  Duration(seconds: pauseDuration),
+                  () => startTimerWithInput(
+                      inputSeconds, repeatCount, pauseDuration));
+            }
           }
-        }
-      },
-    );
+        },
+      );
+    }
   }
 
   @override
@@ -200,15 +213,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildSetTimeButton() {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 32,
-          vertical: 16,
-        ),
-      ),
-      onPressed: () {
+    return ButtonIconWidget(
+      text: 'Set Timer',
+      color: Colors.blueAccent,
+      onClicked: () {
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -255,7 +263,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   onClicked: () {
                     Navigator.of(context).pop();
                     startTimerWithInput(
-                        inputSeconds, repeatCount, pauseDuration);
+                      inputSeconds,
+                      repeatCount,
+                      pauseDuration,
+                    );
                   },
                 ),
                 ButtonWidget(
@@ -269,13 +280,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         );
       },
-      child: const Text(
-        "Set Timer",
-        style: TextStyle(
-          fontSize: 20,
-          color: Colors.white,
-        ),
-      ),
+      icon: const Icon(Icons.timer),
     );
   }
 
@@ -287,7 +292,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ? Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ButtonWidget(
+              ButtonIconWidget(
                 text: isRunning ? 'Pause' : 'Resume',
                 onClicked: () {
                   if (isRunning) {
@@ -296,24 +301,28 @@ class _MyHomePageState extends State<MyHomePage> {
                     startTimer(reset: false);
                   }
                 },
+                icon: isRunning
+                    ? const Icon(Icons.pause_circle)
+                    : const Icon(Icons.play_circle),
               ),
               const SizedBox(width: 12),
-              ButtonWidget(
+              ButtonIconWidget(
                 text: 'Cancel',
                 onClicked: stopTimer,
+                icon: const Icon(Icons.stop_circle),
               )
             ],
           )
         : Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ButtonWidget(
+              ButtonIconWidget(
                 text: 'Start Timer!',
-                color: Colors.black,
-                backgroundColor: Colors.white,
+                color: Colors.blueAccent,
                 onClicked: () {
                   startTimer();
                 },
+                icon: const Icon(Icons.play_circle),
               ),
               const SizedBox(width: 12),
               _buildSetTimeButton(),
