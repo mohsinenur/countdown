@@ -40,6 +40,17 @@ class _MyHomePageState extends State<MyHomePage> {
   int repeatCount = 0;
   int pauseDuration = 0;
   Timer? timer;
+  final inputSecondsController = TextEditingController();
+  final repeatCountController = TextEditingController();
+  final pauseDurationController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    inputSecondsController.text = inputSeconds.toString();
+    repeatCountController.text = repeatCount.toString();
+    pauseDurationController.text = pauseDuration.toString();
+  }
 
   void resetTimer() => setState(() => seconds = maxSeconds);
 
@@ -82,6 +93,9 @@ class _MyHomePageState extends State<MyHomePage> {
       () {
         seconds = inputSeconds;
         maxSeconds = inputSeconds;
+        inputSecondsController.text = inputSeconds.toString();
+        repeatCountController.text = repeatCount.toString();
+        pauseDurationController.text = pauseDuration.toString();
       },
     );
     timer?.cancel();
@@ -123,7 +137,60 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               buildTimer(),
-              const SizedBox(height: 80),
+              const SizedBox(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    'Input Seconds: $inputSeconds',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black38,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Text(
+                    'Repeat Count: $repeatCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black38,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Text(
+                    'Pause Duration: $pauseDuration',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black38,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
               buildButtons(),
             ],
           ),
@@ -151,25 +218,31 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   TextField(
+                    controller: inputSecondsController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: "Enter time in seconds"),
+                      labelText: "Enter time in seconds",
+                    ),
                     onChanged: (text) {
                       inputSeconds = int.parse(text);
                     },
                   ),
                   TextField(
+                    controller: repeatCountController,
                     keyboardType: TextInputType.number,
-                    decoration:
-                        const InputDecoration(labelText: "Enter repeat count"),
+                    decoration: const InputDecoration(
+                      labelText: "Enter repeat count",
+                    ),
                     onChanged: (text) {
                       repeatCount = int.parse(text);
                     },
                   ),
                   TextField(
+                    controller: pauseDurationController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: "Enter pause duration in seconds"),
+                      labelText: "Enter pause duration in seconds",
+                    ),
                     onChanged: (text) {
                       pauseDuration = int.parse(text);
                     },
@@ -178,7 +251,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               actions: <Widget>[
                 ButtonWidget(
-                  text: "OK",
+                  text: "Start",
                   onClicked: () {
                     Navigator.of(context).pop();
                     startTimerWithInput(
@@ -210,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final isRunning = timer == null ? false : timer!.isActive;
     final isCompleted = seconds == maxSeconds || seconds == 0;
 
-    return isRunning || !isCompleted && repeatCount!=0
+    return isRunning || !isCompleted
         ? Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -260,7 +333,9 @@ class _MyHomePageState extends State<MyHomePage> {
               strokeWidth: 12,
               backgroundColor: Colors.greenAccent,
             ),
-            Center(child: buildTime()),
+            Center(
+              child: buildTime(),
+            ),
           ],
         ),
       );
